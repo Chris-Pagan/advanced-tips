@@ -11,6 +11,17 @@ function create(req, res) {
   res.status(201).json({ data: newNote });
 }
 
+function read(req, res) {
+  res.json({ data: res.locals.note })
+}
+
+function update(req, res) {
+  const { data: { text } = {} } = req.body;
+  res.locals.note.text = text;
+  res.json({ data: res.locals.note });
+}
+
+
 function destroy(req, res) {
   const { noteId } = req.params;
   const index = notes.findIndex((note) => note.id === Number(noteId));
@@ -20,23 +31,24 @@ function destroy(req, res) {
   res.sendStatus(204);
 }
 
+function list(req, res) {
+  res.json({ data: notes });
+}
+
 function hasText(req, res, next) {
   const { data: { text } = {} } = req.body;
-
   if (text) {
     return next();
   }
   next({ status: 400, message: "A 'text' property is required." });
 }
 
-function list(req, res) {
-  res.json({ data: notes });
-}
 
 function noteExists(req, res, next) {
   const noteId = Number(req.params.noteId);
   const foundNote = notes.find((note) => note.id === noteId);
   if (foundNote) {
+    res.locals.note = foundNote;
     return next();
   }
   next({
@@ -45,22 +57,6 @@ function noteExists(req, res, next) {
   });
 }
 
-function read(req, res) {
-  const noteId = Number(req.params.noteId);
-  const foundNote = notes.find((note) => (note.id = noteId));
-  res.json({ data: foundNote });
-}
-
-function update(req, res) {
-  const noteId = Number(req.params.noteId);
-  const foundNote = notes.find((note) => note.id === noteId);
-
-  const { data: { text } = {} } = req.body;
-
-  foundNote.text = text;
-
-  res.json({ data: foundNote });
-}
 
 module.exports = {
   create: [hasText, create],
@@ -68,4 +64,5 @@ module.exports = {
   read: [noteExists, read],
   update: [noteExists, hasText, update],
   delete: destroy,
+  noteExists,
 };
